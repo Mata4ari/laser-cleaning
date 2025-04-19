@@ -4,10 +4,10 @@
   "main": "index.js",
   "scripts": {
     "start": "cd server && npm run start:prod",
-    "build": "cd client && npm install && npm run build && cd ../server && npm run build",
+    "build": "cd client && npm install && npm run build && cd ../server && npm install && npm run build",
     "dev:client": "cd client && npm start",
     "dev:server": "cd server && npm run start:dev",
-    "install-all": "cd client && npm install && cd ../server && npm install"
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install"
   },
   "keywords": [],
   "author": "",
