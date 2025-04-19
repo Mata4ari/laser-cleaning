@@ -1,0 +1,16 @@
+{
+  "name": "laser-cleaning",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "cd server && npm run start:prod",
+    "build": "cd client && npm run build && cd ../server && npm run build",
+    "dev:client": "cd client && npm start",
+    "dev:server": "cd server && npm run start:dev",
+    "install-all": "cd client && npm install && cd ../server && npm install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
