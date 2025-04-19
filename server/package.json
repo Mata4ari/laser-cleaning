@@ -6,8 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "prebuild": "rimraf dist",
-    "build": "nest build && cp -r ../client/build dist/client",
+    "prebuild": "npx rimraf dist",
+    "build": "nest build",
+    "postbuild": "mkdir -p dist/client && cp -r ../client/build/* dist/client/",
     "start": "node dist/main",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
