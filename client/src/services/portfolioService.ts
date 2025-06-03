@@ -1,5 +1,5 @@
 // client/src/services/portfolioService.ts
-const API_URL = '/api/portfolio';
+const API_URL = 'http://localhost:5050/api/portfolio';
 
 export interface PortfolioItem {
   id: number;
@@ -10,11 +10,13 @@ export interface PortfolioItem {
 
 export const getPortfolioItems = async (): Promise<PortfolioItem[]> => {
   const response = await fetch(API_URL);
-  console.log("RESPONSE: ", response);
+  const debugClone = response.clone();
+  let text = await debugClone.text();
+  console.log("RESPONSE1: ", text);
   if (!response.ok) {
     throw new Error('Failed to fetch portfolio items');
   }
-  console.log("RESPONSE: ", response.json());
+  console.log("RESPONSE: ", text);
   return response.json();
 };
 

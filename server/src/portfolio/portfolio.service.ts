@@ -12,6 +12,7 @@ export class PortfolioService {
   private readData(): Portfolio[] {
     try {
       const data = fs.readFileSync(this.dataPath, 'utf8');
+      console.log(data);
       return JSON.parse(data);
     } catch (err) {
       return [];

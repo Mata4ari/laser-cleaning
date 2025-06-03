@@ -10,7 +10,7 @@ export class AppController {
     this.serveIndex(res);
   }
 
-  @Get('*')
+  @Get('/')
   serveClient(@Req() req: Request, @Res() res: Response) {
     const requestedPath = req.path;
 

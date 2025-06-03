@@ -4,16 +4,19 @@ import { join } from 'path';
 import { PortfolioModule } from './portfolio/portfolio.module';
 import { AppController } from './app.controller';
 
+
+
 @Module({
   imports: [
+    PortfolioModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'client', 'build'),
       exclude: ['/api*'],
       serveStaticOptions: {
         index: false,
+        fallthrough: true,
       },
     }),
-    PortfolioModule,
   ],
   controllers: [AppController],
 })
