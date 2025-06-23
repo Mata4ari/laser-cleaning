@@ -1,8 +1,14 @@
 [
   {
-    "id": 1,
-    "title": "Пример работы 1",
-    "description": "Очистка металлической поверхности от ржавчины",
-    "imageUrl": "/images/1.jpg"
+    "id": 2,
+    "title": "Новая работа",
+    "description": "Описание работы",
+    "imageUrl": "blob:http://localhost:3000/0fe8ec6f-1f0e-4944-acbc-00596b089907"
+  },
+  {
+    "id": 3,
+    "title": "Новая работа",
+    "description": "Описание работы",
+    "imageUrl": "blob:http://localhost:3000/285b31d3-66b9-43d5-b8ca-75a3ffbcedd8"
   }
 ]

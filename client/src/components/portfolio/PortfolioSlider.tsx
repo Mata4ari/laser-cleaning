@@ -70,18 +70,15 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
     loadItems();
   }, []);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
-      const newItem: Omit<PortfolioItem, "id"> = {
-        title: "Новая работа",
-        description: "Описание работы",
-        imageUrl: URL.createObjectURL(file)
-      };
-      setEditingItem({ ...newItem, id: 0 });
-      setIsDialogOpen(true);
-    }
-  }, []);
+    const onDrop = useCallback((acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 0 && editingItem) {
+        const file = acceptedFiles[0];
+        setEditingItem({
+          ...editingItem,
+          imageUrl: URL.createObjectURL(file)
+        });
+      }
+    }, [editingItem]);
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
@@ -92,9 +89,10 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
   });
 
   const handleEdit = (item: PortfolioItem) => {
-    setEditingItem(item);
-    setIsDialogOpen(true);
-  };
+  // Создаем копию объекта для редактирования
+  setEditingItem({ ...item });
+  setIsDialogOpen(true);
+};
 
   const handleDelete = async (id: number) => {
     try {
@@ -108,44 +106,56 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
   };
 
   const handleSave = async () => {
-    if (!editingItem) return;
+  if (!editingItem) return;
 
-    try {
-      setIsUploading(true);
+  try {
+    setIsUploading(true);
 
-      if (
-        editingItem.id &&
-        portfolioItems.some((item) => item.id === editingItem.id)
-      ) {
-        // Обновление существующего элемента
-        const updatedItem = await updatePortfolioItem(editingItem.id, {
-          title: editingItem.title,
-          description: editingItem.description,
-          imageUrl: editingItem.imageUrl
-        });
-        setPortfolioItems(
-          portfolioItems.map((item) =>
-            item.id === updatedItem.id ? updatedItem : item
-          )
-        );
+    // Более надежная проверка на существующий элемент
+    const isExistingItem = editingItem.id > 0 && 
+                         portfolioItems.some(item => item.id === editingItem.id);
+
+    if (isExistingItem) {
+      // Для существующего элемента находим оригинал
+      const originalItem = portfolioItems.find(item => item.id === editingItem.id);
+      if (!originalItem) {
+        throw new Error("Оригинальная работа не найдена");
+      }
+
+      // Создаем объект только с измененными полями
+      const updatedFields: Partial<PortfolioItem> = {};
+      if (editingItem.title !== originalItem.title) updatedFields.title = editingItem.title;
+      if (editingItem.description !== originalItem.description) updatedFields.description = editingItem.description;
+      if (editingItem.imageUrl !== originalItem.imageUrl) updatedFields.imageUrl = editingItem.imageUrl;
+
+      // Обновляем только если есть изменения
+      if (Object.keys(updatedFields).length > 0) {
+        const updatedItem = await updatePortfolioItem(editingItem.id, updatedFields);
+        setPortfolioItems(portfolioItems.map(item => 
+          item.id === updatedItem.id ? updatedItem : item
+        ));
         showMessage("Работа обновлена", "success");
       } else {
-        const newItem = await createPortfolioItem({
-          title: editingItem.title,
-          description: editingItem.description,
-          imageUrl: editingItem.imageUrl
-        });
-        setPortfolioItems([...portfolioItems, newItem]);
-        showMessage("Новая работа добавлена", "success");
+        showMessage("Нет изменений для сохранения", "error");
       }
-    } catch (error) {
-      showMessage("Ошибка сохранения работы", "error");
-      console.error(error);
-    } finally {
-      setIsUploading(false);
-      setIsDialogOpen(false);
+    } else {
+      // Создаем новую работу
+      const newItem = await createPortfolioItem({
+        title: editingItem.title,
+        description: editingItem.description,
+        imageUrl: editingItem.imageUrl
+      });
+      setPortfolioItems([...portfolioItems, newItem]);
+      showMessage("Новая работа добавлена", "success");
     }
-  };
+  } catch (error) {
+    showMessage("Ошибка сохранения работы", "error");
+    console.error(error);
+  } finally {
+    setIsUploading(false);
+    setIsDialogOpen(false);
+  }
+};
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!editingItem) return;
@@ -193,9 +203,20 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
     >
       {isAdmin && (
         <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-          <Button variant="contained" startIcon={<Add />} {...getRootProps()}>
+          <Button 
+            variant="contained" 
+            startIcon={<Add />} 
+            onClick={() => {
+              setEditingItem({
+                id: 0,
+                title: "Новая работа",
+                description: "Описание работы",
+                imageUrl: ""
+              });
+              setIsDialogOpen(true);
+            }}
+          >
             Добавить работу
-            <input {...getInputProps()} />
           </Button>
         </Box>
       )}
@@ -388,79 +409,89 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          <Box sx={{ mb: 3 }}>
-            {editingItem?.imageUrl && (
-              <Box
-                sx={{
-                  width: "100%",
-                  height: 200,
-                  mb: 2,
-                  borderRadius: 1,
-                  overflow: "hidden",
-                  position: "relative"
-                }}
-              >
-                <img
-                  src={editingItem.imageUrl}
-                  alt="Preview"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-                <Box
-                  {...getRootProps()}
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0,0,0,0.5)",
-                    opacity: 0,
-                    transition: "opacity 0.3s",
-                    "&:hover": { opacity: 1 },
-                    cursor: "pointer"
-                  }}
-                >
-                  <input {...getInputProps()} />
-                  <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    sx={{ pointerEvents: "none" }}
-                  >
-                    Заменить изображение
-                  </Button>
-                </Box>
-              </Box>
-            )}
-          </Box>
-          <TextField
-            fullWidth
-            label="Название работы"
-            name="title"
-            value={editingItem?.title || ""}
-            onChange={handleInputChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Описание"
-            name="description"
-            value={editingItem?.description || ""}
-            onChange={handleInputChange}
-            multiline
-            rows={4}
-          />
-        </DialogContent>
+  <Box sx={{ mb: 3 }} {...getRootProps()}>
+    <input {...getInputProps()} />
+    {editingItem?.imageUrl ? (
+      <Box sx={{
+        width: "100%",
+        height: 200,
+        mb: 2,
+        borderRadius: 1,
+        overflow: "hidden",
+        position: "relative"
+      }}>
+        <img
+          src={editingItem.imageUrl}
+          alt="Preview"
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+        <Box sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "rgba(0,0,0,0.5)",
+          opacity: 0,
+          transition: "opacity 0.3s",
+          "&:hover": { opacity: 1 },
+          cursor: "pointer"
+        }}>
+          <Button variant="contained" startIcon={<Add />}>
+            Заменить изображение
+          </Button>
+        </Box>
+      </Box>
+    ) : (
+      <Box sx={{
+        width: "100%",
+        height: 200,
+        border: "2px dashed",
+        borderColor: "divider",
+        borderRadius: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        cursor: "pointer"
+      }}>
+        <Add fontSize="large" />
+        <Typography>Перетащите изображение или кликните для выбора</Typography>
+      </Box>
+    )}
+  </Box>
+  <TextField
+    fullWidth
+    label="Название работы"
+    name="title"
+    value={editingItem?.title || ""}
+    onChange={handleInputChange}
+    sx={{ mb: 2 }}
+  />
+  <TextField
+    fullWidth
+    label="Описание"
+    name="description"
+    value={editingItem?.description || ""}
+    onChange={handleInputChange}
+    multiline
+    rows={4}
+  />
+</DialogContent>
         <DialogActions>
           <Button onClick={() => setIsDialogOpen(false)}>Отмена</Button>
           <Button
             onClick={handleSave}
             variant="contained"
             disabled={
-              isUploading || !editingItem?.title || !editingItem?.description
-            }
+              isUploading || 
+              !editingItem?.title || 
+              !editingItem?.description ||
+              !editingItem?.imageUrl  // Добавлена проверка на изображение
+}
           >
             {isUploading ? "Сохранение..." : "Сохранить"}
           </Button>

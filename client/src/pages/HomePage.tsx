@@ -53,6 +53,7 @@ import {
 import { motion } from "framer-motion";
 import PortfolioSlider from "../components/portfolio/PortfolioSlider";
 import RequestForm from "../components/forms/RequestForm";
+import auth from "../hooks/useAuth"
 
 const FullWidthSection = styled(Box)({
   width: "100%",
@@ -832,7 +833,7 @@ const HomePage: React.FC = () => {
               position: "relative"
             }}
           >
-            <PortfolioSlider onSlideChange={handleSlideChange} />
+            <PortfolioSlider onSlideChange={handleSlideChange} isAdmin={auth().isAuthenticated}/>
           </Box>
         </Container>
       </Box>
