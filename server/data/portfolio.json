@@ -1,14 +1,8 @@
 [
   {
-    "id": 2,
-    "title": "Новая работа",
-    "description": "Описание работы",
-    "imageUrl": "blob:http://localhost:3000/0fe8ec6f-1f0e-4944-acbc-00596b089907"
-  },
-  {
     "id": 3,
     "title": "Новая работа",
     "description": "Описание работы",
-    "imageUrl": "blob:http://localhost:3000/285b31d3-66b9-43d5-b8ca-75a3ffbcedd8"
+    "imageUrl": "blob:http://localhost:3000/86eaeb79-1d96-404c-b4a1-b7343c8d22d7"
   }
 ]

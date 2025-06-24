@@ -488,8 +488,6 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
             variant="contained"
             disabled={
               isUploading || 
-              !editingItem?.title || 
-              !editingItem?.description ||
               !editingItem?.imageUrl  // Добавлена проверка на изображение
 }
           >

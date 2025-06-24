@@ -84,20 +84,18 @@ const validationSchema = yup.object({
     .min(2, "Имя должно содержать не менее 2 символов"),
   email: yup
     .string()
-    .email("Введите корректный email")
-    .required("Email обязателен"),
+    .email("Введите корректный email"),
   phone: yup
     .string()
     .required("Телефон обязателен")
     .matches(
       /^(\+375)[\s-]?\(?\d{2}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}$/,
-      "Формат: +7 (123) 456-78-90"
+      "Формат: +375 (XX) XXX-XX-XX"
     ),
   serviceType: yup.string().required("Выберите тип услуги"),
   materialType: yup.string().required("Выберите тип материала"),
   message: yup
     .string()
-    .min(10, "Сообщение должно содержать не менее 10 символов")
     .max(500, "Сообщение не должно превышать 500 символов")
 });
 
@@ -161,21 +159,17 @@ const RequestForm: React.FC = () => {
     if (activeStep === 0) {
       // Проверка полей первого шага
       formik.validateField("name");
-      formik.validateField("email");
       formik.validateField("phone");
 
       if (
         formik.errors.name ||
-        formik.errors.email ||
         formik.errors.phone ||
         !formik.values.name ||
-        !formik.values.email ||
         !formik.values.phone
       ) {
         formik.setTouched(
           {
             name: true,
-            email: true,
             phone: true
           },
           true
@@ -222,10 +216,8 @@ const RequestForm: React.FC = () => {
     if (step === 0) {
       return !!(
         formik.values.name &&
-        formik.values.email &&
         formik.values.phone &&
         !formik.errors.name &&
-        !formik.errors.email &&
         !formik.errors.phone
       );
     } else if (step === 1) {
@@ -236,7 +228,7 @@ const RequestForm: React.FC = () => {
         !formik.errors.materialType
       );
     } else if (step === 2) {
-      return !!(formik.values.message && !formik.errors.message);
+      return !!(!formik.errors.message);
     }
     return false;
   };
@@ -387,7 +379,7 @@ const RequestForm: React.FC = () => {
                 fullWidth
                 id="message"
                 name="message"
-                label="Описание задачи"
+                label="Описание"
                 multiline
                 rows={5}
                 value={formik.values.message}
