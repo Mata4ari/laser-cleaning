@@ -1,44 +1,32 @@
 [
   {
-    "id": 1,
+    "id": 2,
     "title": "Новая работа",
     "description": "Описание работы",
-    "imageUrl": "blob:http://localhost:3000/1b80c56e-4778-4441-ace1-5bd97d4fc406"
+    "imageUrl": "/uploads/72126ada-414d-4ea4-bfbd-b9bc3043739e.jpg"
   },
   {
     "id": 3,
     "title": "Новая работа",
     "description": "Описание работы",
-    "imageUrl": "blob:http://localhost:3000/5217057b-e12b-4cf7-9448-4244e6fbebde"
+    "imageUrl": "/uploads/d51ed540-0656-468c-b05d-df97cb699ab9.jpg"
+  },
+  {
+    "id": 4,
+    "title": "Новая работа",
+    "description": "Описание работы",
+    "imageUrl": "/uploads/8f7653e2-2efb-4435-b445-0cbb5cd503e9.jpg"
   },
   {
     "id": 5,
     "title": "Новая работа",
     "description": "Описание работы",
-    "imageUrl": "blob:http://localhost:3000/c938683e-c297-43d6-ba5c-ae6275ac9f97"
+    "imageUrl": "/uploads/a7976075-5b70-4ea7-a535-aab27d87c86d.jpg"
   },
   {
     "id": 6,
     "title": "Новая работа",
     "description": "Описание работы",
-    "imageUrl": "blob:http://localhost:3000/181f0ce6-ad64-4d6f-9095-55ae21969a31"
-  },
-  {
-    "id": 7,
-    "title": "Новая работа",
-    "description": "Описание работы",
-    "imageUrl": "blob:http://localhost:3000/f4dea27e-3bbe-4c99-9bb8-0dc4c9f0684a"
-  },
-  {
-    "id": 8,
-    "title": "Новая работа",
-    "description": "Описание работы",
-    "imageUrl": "blob:http://localhost:3000/37f9298e-1e86-4713-9352-46ab09381c0a"
-  },
-  {
-    "id": 9,
-    "title": "Новая работа",
-    "description": "Описание работы",
-    "imageUrl": "blob:http://localhost:3000/453bac0a-d393-4c2f-8beb-d7d7532d2050"
+    "imageUrl": "/uploads/5ebece58-5fb5-427b-a36b-49c0e12e04f9.jpg"
   }
 ]

@@ -8,52 +8,49 @@ export interface PortfolioItem {
 }
 
 // Вспомогательная функция для получения заголовков с токеном
-const getAuthHeaders = () => {
+const getAuthHeaders = (isFormData = false) => {
   const token = localStorage.getItem('token');
-  return {
-    'Content-Type': 'application/json',
+  const headers: Record<string, string> = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
+  
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+  
+  return headers;
+};
+
+const sendFormData = async (url: string, method: string, formData: FormData) => {
+  const response = await fetch(url, {
+    method,
+    headers: getAuthHeaders(true),
+    body: formData,
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to ${method} portfolio item`);
+  }
+  
+  return response.json();
 };
 
 export const getPortfolioItems = async (): Promise<PortfolioItem[]> => {
   const response = await fetch(API_URL, {
     headers: getAuthHeaders(),
   });
-
-  const debugClone = response.clone();
-  let text = await debugClone.text();
-  // console.log("RESPONSE1: ", text);
-
   if (!response.ok) {
     throw new Error('Failed to fetch portfolio items');
   }
-  // console.log("RESPONSE: ", text);
   return response.json();
 };
 
-export const createPortfolioItem = async (item: Omit<PortfolioItem, 'id'>): Promise<PortfolioItem> => {
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(item),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to create portfolio item');
-  }
-  return response.json();
+export const createPortfolioItem = async (formData: FormData): Promise<PortfolioItem> => {
+  return sendFormData(API_URL, 'POST', formData);
 };
 
-export const updatePortfolioItem = async (id: number, item: Partial<PortfolioItem>): Promise<PortfolioItem> => {
-  const response = await fetch(`${API_URL}/${id}`, {
-    method: 'PUT',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(item),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update portfolio item');
-  }
-  return response.json();
+export const updatePortfolioItem = async (id: number, formData: FormData): Promise<PortfolioItem> => {
+  return sendFormData(`${API_URL}/${id}`, 'PUT', formData);
 };
 
 export const deletePortfolioItem = async (id: number): Promise<void> => {

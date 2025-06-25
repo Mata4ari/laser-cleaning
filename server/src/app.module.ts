@@ -14,8 +14,16 @@ import { AuthModule } from './auth/auth.module';
     PortfolioModule,
     AuthModule,
     ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads', // Префикс URL для доступа к файлам
+      serveStaticOptions: {
+        index: false,
+        fallthrough: false,
+      },
+    }),
+    ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'client', 'build'),
-      exclude: ['/api*'],
+      exclude: ['/api*','/uploads*'],
       serveStaticOptions: {
         index: false,
         fallthrough: true,

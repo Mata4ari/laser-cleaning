@@ -9,6 +9,4 @@ export class CreatePortfolioDto {
   @IsNotEmpty()
   description: string;
 
-  @IsUrl()
-  imageUrl: string;
 }

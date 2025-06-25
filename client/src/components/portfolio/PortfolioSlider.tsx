@@ -35,9 +35,15 @@ import {
   PortfolioItem
 } from "../../services/portfolioService";
 
+// Базовый URL для изображений
+const API_BASE_URL = "http://localhost:5050";
+
 interface PortfolioSliderProps {
   onSlideChange?: (imageUrl: string) => void;
   isAdmin?: boolean;
+}
+interface EditingItem extends PortfolioItem {
+  imageFile?: File;
 }
 
 const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
@@ -52,14 +58,25 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
   const swiperRef = useRef<SwiperType | null>(null);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success" as "success" | "error"
   });
+
+  // Функция для получения полного URL изображения
+  const getFullImageUrl = (url: string) => {
+    if (!url) return '';
+    // Если URL уже абсолютный, возвращаем как есть
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
+      return url;
+    }
+    // Иначе добавляем базовый URL
+    return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
+  };
 
   useEffect(() => {
     const loadItems = async () => {
@@ -81,9 +98,11 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0 && editingItem) {
       const file = acceptedFiles[0];
+      const previewUrl = URL.createObjectURL(file);
       setEditingItem({
         ...editingItem,
-        imageUrl: URL.createObjectURL(file)
+        imageUrl: previewUrl,
+        imageFile: file
       });
     }
   }, [editingItem]);
@@ -96,7 +115,6 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
     maxFiles: 1
   });
 
-  // Функция для обработки клика по карточке
   const handleCardClick = (index: number) => {
     if (swiperRef.current) {
       swiperRef.current.slideTo(index);
@@ -125,44 +143,39 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
     try {
       setIsUploading(true);
 
-      const isExistingItem = editingItem.id > 0 && 
-                          portfolioItems.some(item => item.id === editingItem.id);
+      const formData = new FormData();
+      formData.append('title', editingItem.title);
+      formData.append('description', editingItem.description);
 
-      if (isExistingItem) {
-        const originalItem = portfolioItems.find(item => item.id === editingItem.id);
-        if (!originalItem) {
-          throw new Error("Оригинальная работа не найдена");
-        }
+      if (editingItem.imageFile) {
+        formData.append('image', editingItem.imageFile);
+      }
 
-        const updatedFields: Partial<PortfolioItem> = {};
-        if (editingItem.title !== originalItem.title) updatedFields.title = editingItem.title;
-        if (editingItem.description !== originalItem.description) updatedFields.description = editingItem.description;
-        if (editingItem.imageUrl !== originalItem.imageUrl) updatedFields.imageUrl = editingItem.imageUrl;
-
-        if (Object.keys(updatedFields).length > 0) {
-          const updatedItem = await updatePortfolioItem(editingItem.id, updatedFields);
-          setPortfolioItems(portfolioItems.map(item => 
-            item.id === updatedItem.id ? updatedItem : item
-          ));
-          showMessage("Работа обновлена", "success");
-        } else {
-          showMessage("Нет изменений для сохранения", "error");
-        }
+      let updatedItems;
+      if (editingItem.id > 0 && portfolioItems.some(item => item.id === editingItem.id)) {
+        const updatedItem = await updatePortfolioItem(editingItem.id, formData);
+        updatedItems = portfolioItems.map(item => 
+          item.id === updatedItem.id ? updatedItem : item
+        );
+        showMessage("Работа обновлена", "success");
       } else {
-        const newItem = await createPortfolioItem({
-          title: editingItem.title,
-          description: editingItem.description,
-          imageUrl: editingItem.imageUrl
-        });
-        setPortfolioItems([...portfolioItems, newItem]);
+        const newItem = await createPortfolioItem(formData);
+        updatedItems = [...portfolioItems, newItem];
         showMessage("Новая работа добавлена", "success");
       }
+
+      if (editingItem.imageUrl && editingItem.imageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(editingItem.imageUrl);
+      }
+
+      setPortfolioItems(updatedItems);
+      setIsDialogOpen(false);
+      setEditingItem(null);
     } catch (error) {
       showMessage("Ошибка сохранения работы", "error");
       console.error(error);
     } finally {
       setIsUploading(false);
-      setIsDialogOpen(false);
     }
   };
 
@@ -184,6 +197,14 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
+  };
+
+  const handleDialogClose = () => {
+    if (editingItem?.imageUrl && editingItem.imageUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(editingItem.imageUrl);
+    }
+    setIsDialogOpen(false);
+    setEditingItem(null);
   };
 
   if (loading) {
@@ -304,7 +325,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
               const activeIndex = swiper.realIndex;
               const activeSlide =
                 portfolioItems[activeIndex % portfolioItems.length];
-              onSlideChange?.(activeSlide.imageUrl);
+              onSlideChange?.(getFullImageUrl(activeSlide.imageUrl));
             }}
           >
             {portfolioItems.map((item, index) => (
@@ -388,7 +409,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
                   >
                     <CardMedia
                       component="img"
-                      image={item.imageUrl}
+                      image={getFullImageUrl(item.imageUrl)}
                       alt={item.title}
                       sx={{
                         objectFit: "cover",
@@ -475,7 +496,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
 
       <Dialog
         open={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
+        onClose={handleDialogClose}
         maxWidth="md"
         fullWidth
       >
@@ -486,7 +507,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
           {editingItem?.id ? "Редактировать работу" : "Добавить работу"}
           <IconButton
             aria-label="close"
-            onClick={() => setIsDialogOpen(false)}
+            onClick={handleDialogClose}
             sx={{
               position: "absolute",
               right: 12,
@@ -510,7 +531,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
                 position: "relative"
               }}>
                 <img
-                  src={editingItem.imageUrl}
+                  src={getFullImageUrl(editingItem.imageUrl)}
                   alt="Preview"
                   style={{ 
                     width: "100%", 
@@ -609,7 +630,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button 
-            onClick={() => setIsDialogOpen(false)}
+            onClick={handleDialogClose}
             size={isMobile ? "medium" : "large"}
             sx={{ px: 3 }}
           >
