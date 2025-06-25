@@ -8,15 +8,18 @@ import {
   Delete,
   NotFoundException,
   Req,
+  UseGuards ,
 } from '@nestjs/common';
 import { PortfolioService } from './portfolio.service';
 import { CreatePortfolioDto } from './dto/create-portfolio.dto';
 import { UpdatePortfolioDto } from './dto/update-portfolio.dto';
+import { JwtAuthGuard } from '../auth/JwtAuthGuard';
 
 @Controller('api/portfolio')
 export class PortfolioController {
   constructor(private readonly portfolioService: PortfolioService) {}
 
+  
   @Get()
   findAll(@Req() req: Request) {
     console.log("Incoming request headers:", req.headers);
@@ -33,11 +36,13 @@ export class PortfolioController {
     return item;
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() createPortfolioDto: CreatePortfolioDto) {
     return this.portfolioService.create(createPortfolioDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   update(
     @Param('id') id: string,
@@ -50,6 +55,7 @@ export class PortfolioController {
     return item;
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     if (!this.portfolioService.remove(+id)) {
