@@ -40,7 +40,7 @@ export class PortfolioController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  @UseInterceptors(FileInterceptor('image')) // Обрабатываем поле 'image' в FormData
+  @UseInterceptors(FileInterceptor('image')) 
   create(
     @Body() createPortfolioDto: CreatePortfolioDto,
     @UploadedFile() image?: Express.Multer.File,
