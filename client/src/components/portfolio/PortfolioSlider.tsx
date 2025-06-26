@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Box,
   Typography,
@@ -14,7 +14,10 @@ import {
   DialogActions,
   Snackbar,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Container,
+  useTheme,
+  useMediaQuery
 } from "@mui/material";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Navigation, EffectCreative } from "swiper/modules";
@@ -32,32 +35,54 @@ import {
   PortfolioItem
 } from "../../services/portfolioService";
 
+// Базовый URL для изображений
+const API_BASE_URL = "http://localhost:5050";
+
 interface PortfolioSliderProps {
   onSlideChange?: (imageUrl: string) => void;
   isAdmin?: boolean;
+}
+interface EditingItem extends PortfolioItem {
+  imageFile?: File;
 }
 
 const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
   onSlideChange,
   isAdmin = false
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
+
+  const swiperRef = useRef<SwiperType | null>(null);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success" as "success" | "error"
   });
 
+  // Функция для получения полного URL изображения
+  const getFullImageUrl = (url: string) => {
+    if (!url) return '';
+    // Если URL уже абсолютный, возвращаем как есть
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
+      return url;
+    }
+    // Иначе добавляем базовый URL
+    return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
+  };
+
   useEffect(() => {
     const loadItems = async () => {
       try {
         setLoading(true);
         const items = await getPortfolioItems();
-        console.log(items);
         setPortfolioItems(items);
       } catch (error) {
         showMessage("Ошибка загрузки работ", "error");
@@ -71,17 +96,16 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
   }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
+    if (acceptedFiles.length > 0 && editingItem) {
       const file = acceptedFiles[0];
-      const newItem: Omit<PortfolioItem, "id"> = {
-        title: "Новая работа",
-        description: "Описание работы",
-        imageUrl: URL.createObjectURL(file)
-      };
-      setEditingItem({ ...newItem, id: 0 });
-      setIsDialogOpen(true);
+      const previewUrl = URL.createObjectURL(file);
+      setEditingItem({
+        ...editingItem,
+        imageUrl: previewUrl,
+        imageFile: file
+      });
     }
-  }, []);
+  }, [editingItem]);
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
@@ -91,8 +115,14 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
     maxFiles: 1
   });
 
+  const handleCardClick = (index: number) => {
+    if (swiperRef.current) {
+      swiperRef.current.slideTo(index);
+    }
+  };
+
   const handleEdit = (item: PortfolioItem) => {
-    setEditingItem(item);
+    setEditingItem({ ...item });
     setIsDialogOpen(true);
   };
 
@@ -113,37 +143,39 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
     try {
       setIsUploading(true);
 
-      if (
-        editingItem.id &&
-        portfolioItems.some((item) => item.id === editingItem.id)
-      ) {
-        // Обновление существующего элемента
-        const updatedItem = await updatePortfolioItem(editingItem.id, {
-          title: editingItem.title,
-          description: editingItem.description,
-          imageUrl: editingItem.imageUrl
-        });
-        setPortfolioItems(
-          portfolioItems.map((item) =>
-            item.id === updatedItem.id ? updatedItem : item
-          )
+      const formData = new FormData();
+      formData.append('title', editingItem.title);
+      formData.append('description', editingItem.description);
+
+      if (editingItem.imageFile) {
+        formData.append('image', editingItem.imageFile);
+      }
+
+      let updatedItems;
+      if (editingItem.id > 0 && portfolioItems.some(item => item.id === editingItem.id)) {
+        const updatedItem = await updatePortfolioItem(editingItem.id, formData);
+        updatedItems = portfolioItems.map(item => 
+          item.id === updatedItem.id ? updatedItem : item
         );
         showMessage("Работа обновлена", "success");
       } else {
-        const newItem = await createPortfolioItem({
-          title: editingItem.title,
-          description: editingItem.description,
-          imageUrl: editingItem.imageUrl
-        });
-        setPortfolioItems([...portfolioItems, newItem]);
+        const newItem = await createPortfolioItem(formData);
+        updatedItems = [...portfolioItems, newItem];
         showMessage("Новая работа добавлена", "success");
       }
+
+      if (editingItem.imageUrl && editingItem.imageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(editingItem.imageUrl);
+      }
+
+      setPortfolioItems(updatedItems);
+      setIsDialogOpen(false);
+      setEditingItem(null);
     } catch (error) {
       showMessage("Ошибка сохранения работы", "error");
       console.error(error);
     } finally {
       setIsUploading(false);
-      setIsDialogOpen(false);
     }
   };
 
@@ -167,6 +199,14 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleDialogClose = () => {
+    if (editingItem?.imageUrl && editingItem.imageUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(editingItem.imageUrl);
+    }
+    setIsDialogOpen(false);
+    setEditingItem(null);
+  };
+
   if (loading) {
     return (
       <Box
@@ -174,264 +214,379 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          height: 300
+          height: 400
         }}
       >
-        <CircularProgress />
+        <CircularProgress size={60} />
       </Box>
     );
   }
 
   return (
-    <Box
-      sx={{
-        width: "200%",
-        height: "100%",
-        position: "relative",
-        padding: "10px 0"
-      }}
-    >
-      {isAdmin && (
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-          <Button variant="contained" startIcon={<Add />} {...getRootProps()}>
+    <Container maxWidth="xl" sx={{ py: 6 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'flex-end', 
+        alignItems: 'center', 
+        mb: 6,
+        px: isMobile ? 2 : 0
+      }}>
+        {isAdmin && (
+          <Button 
+            variant="contained" 
+            startIcon={<Add />} 
+            onClick={() => {
+              setEditingItem({
+                id: 0,
+                title: "Новая работа",
+                description: "Описание работы",
+                imageUrl: ""
+              });
+              setIsDialogOpen(true);
+            }}
+            size="large"
+            sx={{ 
+              fontSize: isMobile ? '0.875rem' : '1rem',
+              px: 3,
+              py: 1.5
+            }}
+          >
             Добавить работу
-            <input {...getInputProps()} />
           </Button>
-        </Box>
-      )}
+        )}
+      </Box>
 
       {portfolioItems.length > 0 ? (
-        <Swiper
-          style={{
-            width: "100%",
-            height: "100%"
-          }}
-          spaceBetween={40}
-          slidesPerView={5.0}
-          centeredSlides={true}
-          pagination={{ clickable: true }}
-          navigation={true}
-          loop={!isAdmin}
-          autoplay={!isAdmin ? { delay: 3000 } : false}
-          grabCursor={true}
-          breakpoints={{
-            640: {
-              slidesPerView: 1.3,
-              spaceBetween: 20
-            },
-            768: {
-              slidesPerView: 1.7,
-              spaceBetween: 20
-            },
-            1024: {
-              slidesPerView: 2.2,
-              spaceBetween: 20
-            },
-            1440: {
-              slidesPerView: 2.8,
-              spaceBetween: 20
-            }
-          }}
-          modules={[Pagination, Navigation, EffectCreative]}
-          effect="creative"
-          creativeEffect={{
-            prev: {
-              shadow: true,
-              translate: ["-60%", 0, -300],
-              rotate: [0, 0, -5]
-            },
-            next: {
-              shadow: true,
-              translate: ["60%", 0, -300],
-              rotate: [0, 0, 5]
-            }
-          }}
-          onSlideChange={(swiper: SwiperType) => {
-            const activeIndex = swiper.realIndex;
-            const activeSlide =
-              portfolioItems[activeIndex % portfolioItems.length];
-            onSlideChange?.(activeSlide.imageUrl);
-          }}
-        >
-          {portfolioItems.map((item) => (
-            <SwiperSlide
-              key={item.id}
-              style={{
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "100%"
-              }}
-            >
-              <Card
-                sx={{
+        <Box sx={{ 
+          position: 'relative',
+          px: isMobile ? 1 : 0
+        }}>
+          <Swiper
+            style={{
+              width: "100%",
+              height: "100%",
+              padding: "30px 0 60px"
+            }}
+            spaceBetween={isDesktop ? 60 : isTablet ? 40 : 30}
+            slidesPerView={1.2}
+            centeredSlides={true}
+            pagination={{ 
+              clickable: true,
+              dynamicBullets: true 
+            }}
+            navigation={true}
+            loop={!isAdmin}
+            autoplay={!isAdmin ? { delay: 3500, disableOnInteraction: false } : false}
+            grabCursor={true}
+            breakpoints={{
+              320: {
+                slidesPerView: 1.1,
+                spaceBetween: 20
+              },
+              600: {
+                slidesPerView: 1.3,
+                spaceBetween: 25
+              },
+              900: {
+                slidesPerView: 1.8,
+                spaceBetween: 30
+              },
+              1200: {
+                slidesPerView: 2.2,
+                spaceBetween: 40
+              },
+              1600: {
+                slidesPerView: 2.8,
+                spaceBetween: 50
+              },
+              1920: {
+                slidesPerView: 3.2,
+                spaceBetween: 60
+              }
+            }}
+            modules={[Pagination, Navigation, EffectCreative]}
+            effect="creative"
+            creativeEffect={{
+              prev: {
+                shadow: true,
+                translate: ["-65%", 0, -400],
+                rotate: [0, 0, -8]
+              },
+              next: {
+                shadow: true,
+                translate: ["65%", 0, -400],
+                rotate: [0, 0, 8]
+              }
+            }}
+            onSwiper={(swiper:SwiperType) => {
+              swiperRef.current = swiper;
+            }}
+            onSlideChange={(swiper: SwiperType) => {
+              const activeIndex = swiper.realIndex;
+              const activeSlide =
+                portfolioItems[activeIndex % portfolioItems.length];
+              onSlideChange?.(getFullImageUrl(activeSlide.imageUrl));
+            }}
+          >
+            {portfolioItems.map((item, index) => (
+              <SwiperSlide
+                key={item.id}
+                style={{
+                  height: "auto",
                   display: "flex",
-                  flexDirection: "column",
-                  transition: "transform 0.3s",
-                  borderRadius: "20px",
-                  boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-                  "&:hover": {
-                    transform: "scale(1.02)",
-                    boxShadow: "0 15px 40px rgba(0,0,0,0.3)"
-                  },
-                  height: "95%",
-                  width: "100%",
-                  margin: "auto",
-                  maxWidth: "none",
-                  position: "relative"
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: isMobile ? '0 5px' : '0 15px',
+                  cursor: 'pointer'
                 }}
+                onClick={() => handleCardClick(index)}
               >
-                {isAdmin && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      zIndex: 1,
-                      display: "flex",
-                      gap: 1,
-                      backgroundColor: "rgba(255,255,255,0.7)",
-                      borderRadius: "20px",
-                      p: 0.5
-                    }}
-                  >
-                    <IconButton
-                      aria-label="edit"
-                      onClick={() => handleEdit(item)}
-                      size="small"
-                    >
-                      <Edit fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      aria-label="delete"
-                      onClick={() => handleDelete(item.id)}
-                      size="small"
-                    >
-                      <Delete fontSize="small" />
-                    </IconButton>
-                  </Box>
-                )}
-
-                <Box
+                <Card
                   sx={{
-                    height: "85%",
-                    overflow: "hidden",
-                    borderTopLeftRadius: "20px",
-                    borderTopRightRadius: "20px"
-                  }}
-                >
-                  <CardMedia
-                    component="img"
-                    image={item.imageUrl}
-                    alt={item.title}
-                    sx={{
-                      objectFit: "cover",
-                      width: "100%",
-                      height: "100%"
-                    }}
-                  />
-                </Box>
-                <CardContent
-                  sx={{
-                    flexGrow: 1,
-                    p: 3,
                     display: "flex",
                     flexDirection: "column",
-                    justifyContent: "center"
+                    transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                    borderRadius: "24px",
+                    boxShadow: "0 12px 36px rgba(0,0,0,0.15)",
+                    "&:hover": {
+                      transform: "scale(1.03)",
+                      boxShadow: "0 18px 48px rgba(0,0,0,0.25)"
+                    },
+                    height: "100%",
+                    width: "100%",
+                    maxWidth: isDesktop ? 600 : 500,
+                    position: "relative",
+                    overflow: "hidden"
                   }}
                 >
-                  <Typography
-                    variant="h4"
-                    component="div"
-                    sx={{ fontWeight: 600 }}
+                  {isAdmin && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 12,
+                        right: 12,
+                        zIndex: 1,
+                        display: "flex",
+                        gap: 1,
+                        backgroundColor: "rgba(255,255,255,0.8)",
+                        borderRadius: "24px",
+                        p: 1,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+                      }}
+                    >
+                      <IconButton
+                        aria-label="edit"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(item);
+                        }}
+                        size={isMobile ? "small" : "medium"}
+                        color="primary"
+                      >
+                        <Edit fontSize={isMobile ? "small" : "medium"} />
+                      </IconButton>
+                      <IconButton
+                        aria-label="delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(item.id);
+                        }}
+                        size={isMobile ? "small" : "medium"}
+                        color="error"
+                      >
+                        <Delete fontSize={isMobile ? "small" : "medium"} />
+                      </IconButton>
+                    </Box>
+                  )}
+
+                  <Box
+                    sx={{
+                      height: isDesktop ? 380 : isTablet ? 340 : 300,
+                      overflow: "hidden",
+                      borderTopLeftRadius: "24px",
+                      borderTopRightRadius: "24px"
+                    }}
                   >
-                    {item.title}
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    color="text.secondary"
-                    sx={{ mt: 2 }}
+                    <CardMedia
+                      component="img"
+                      image={getFullImageUrl(item.imageUrl)}
+                      alt={item.title}
+                      sx={{
+                        objectFit: "cover",
+                        width: "100%",
+                        height: "100%",
+                        transition: "transform 0.5s ease",
+                        "&:hover": {
+                          transform: "scale(1.05)"
+                        }
+                      }}
+                    />
+                  </Box>
+                  <CardContent
+                    sx={{
+                      flexGrow: 1,
+                      p: isDesktop ? 4 : 3,
+                      pb: isDesktop ? 4 : 3
+                    }}
                   >
-                    {item.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+                    <Typography
+                      variant={isDesktop ? "h4" : "h5"}
+                      component="div"
+                      sx={{ 
+                        fontWeight: 700,
+                        mb: 2,
+                        lineHeight: 1.2
+                      }}
+                    >
+                      {item.title}
+                    </Typography>
+                    <Typography
+                      variant={isDesktop ? "body1" : "body2"}
+                      color="text.secondary"
+                      sx={{
+                        fontSize: isDesktop ? '1.1rem' : '0.95rem',
+                        lineHeight: 1.6
+                      }}
+                    >
+                      {item.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </Box>
       ) : (
-        <Typography variant="h6" textAlign="center" sx={{ py: 4 }}>
-          Нет работ для отображения
-        </Typography>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          py: 10,
+          textAlign: 'center',
+          px: 2
+        }}>
+          <Typography variant={isMobile ? "h5" : "h4"} sx={{ mb: 3 }}>
+            Нет работ для отображения
+          </Typography>
+          {isAdmin && (
+            <Button 
+              variant="contained" 
+              startIcon={<Add />}
+              size="large"
+              onClick={() => {
+                setEditingItem({
+                  id: 0,
+                  title: "Новая работа",
+                  description: "Описание работы",
+                  imageUrl: ""
+                });
+                setIsDialogOpen(true);
+              }}
+              sx={{
+                fontSize: isMobile ? '0.875rem' : '1rem',
+                px: 4,
+                py: 1.5
+              }}
+            >
+              Добавить первую работу
+            </Button>
+          )}
+        </Box>
       )}
 
       <Dialog
         open={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        maxWidth="sm"
+        onClose={handleDialogClose}
+        maxWidth="md"
         fullWidth
       >
-        <DialogTitle>
+        <DialogTitle sx={{ 
+          fontSize: isMobile ? '1.25rem' : '1.5rem',
+          py: 2
+        }}>
           {editingItem?.id ? "Редактировать работу" : "Добавить работу"}
           <IconButton
             aria-label="close"
-            onClick={() => setIsDialogOpen(false)}
+            onClick={handleDialogClose}
             sx={{
               position: "absolute",
-              right: 8,
-              top: 8,
+              right: 12,
+              top: 12,
               color: (theme) => theme.palette.grey[500]
             }}
           >
-            <Close />
+            <Close fontSize={isMobile ? "medium" : "large"} />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{ mb: 3 }}>
-            {editingItem?.imageUrl && (
-              <Box
-                sx={{
-                  width: "100%",
-                  height: 200,
-                  mb: 2,
-                  borderRadius: 1,
-                  overflow: "hidden",
-                  position: "relative"
-                }}
-              >
+        <DialogContent dividers sx={{ py: 3 }}>
+          <Box sx={{ mb: 4 }} {...getRootProps()}>
+            <input {...getInputProps()} />
+            {editingItem?.imageUrl ? (
+              <Box sx={{
+                width: "100%",
+                height: isMobile ? 250 : 350,
+                mb: 3,
+                borderRadius: 2,
+                overflow: "hidden",
+                position: "relative"
+              }}>
                 <img
-                  src={editingItem.imageUrl}
+                  src={getFullImageUrl(editingItem.imageUrl)}
                   alt="Preview"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-                <Box
-                  {...getRootProps()}
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0,0,0,0.5)",
-                    opacity: 0,
-                    transition: "opacity 0.3s",
-                    "&:hover": { opacity: 1 },
-                    cursor: "pointer"
+                  style={{ 
+                    width: "100%", 
+                    height: "100%", 
+                    objectFit: "cover" 
                   }}
-                >
-                  <input {...getInputProps()} />
-                  <Button
-                    variant="contained"
+                />
+                <Box sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                  opacity: 0,
+                  transition: "opacity 0.3s",
+                  "&:hover": { opacity: 1 },
+                  cursor: "pointer"
+                }}>
+                  <Button 
+                    variant="contained" 
                     startIcon={<Add />}
-                    sx={{ pointerEvents: "none" }}
+                    size={isMobile ? "medium" : "large"}
                   >
                     Заменить изображение
                   </Button>
                 </Box>
+              </Box>
+            ) : (
+              <Box sx={{
+                width: "100%",
+                height: isMobile ? 200 : 300,
+                border: "2px dashed",
+                borderColor: "divider",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "column",
+                cursor: "pointer",
+                transition: "border-color 0.3s",
+                "&:hover": {
+                  borderColor: "primary.main"
+                }
+              }}>
+                <Add fontSize="large" sx={{ fontSize: '3rem', mb: 2 }} />
+                <Typography variant={isMobile ? "body1" : "h6"}>
+                  Перетащите изображение или кликните для выбора
+                </Typography>
+                <Typography variant="caption" sx={{ mt: 1 }}>
+                  Рекомендуемый размер: 1200x800px
+                </Typography>
               </Box>
             )}
           </Box>
@@ -441,7 +596,17 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
             name="title"
             value={editingItem?.title || ""}
             onChange={handleInputChange}
-            sx={{ mb: 2 }}
+            sx={{ mb: 3 }}
+            InputProps={{
+              style: {
+                fontSize: isMobile ? '0.95rem' : '1.1rem'
+              }
+            }}
+            InputLabelProps={{
+              style: {
+                fontSize: isMobile ? '0.95rem' : '1.1rem'
+              }
+            }}
           />
           <TextField
             fullWidth
@@ -450,19 +615,40 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
             value={editingItem?.description || ""}
             onChange={handleInputChange}
             multiline
-            rows={4}
+            rows={isMobile ? 5 : 7}
+            InputProps={{
+              style: {
+                fontSize: isMobile ? '0.95rem' : '1.1rem'
+              }
+            }}
+            InputLabelProps={{
+              style: {
+                fontSize: isMobile ? '0.95rem' : '1.1rem'
+              }
+            }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsDialogOpen(false)}>Отмена</Button>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button 
+            onClick={handleDialogClose}
+            size={isMobile ? "medium" : "large"}
+            sx={{ px: 3 }}
+          >
+            Отмена
+          </Button>
           <Button
             onClick={handleSave}
             variant="contained"
-            disabled={
-              isUploading || !editingItem?.title || !editingItem?.description
-            }
+            disabled={isUploading || !editingItem?.imageUrl}
+            size={isMobile ? "medium" : "large"}
+            sx={{ px: 4 }}
           >
-            {isUploading ? "Сохранение..." : "Сохранить"}
+            {isUploading ? (
+              <>
+                <CircularProgress size={24} sx={{ mr: 1 }} />
+                Сохранение...
+              </>
+            ) : "Сохранить"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -473,11 +659,18 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity}
+          sx={{
+            fontSize: isMobile ? '0.875rem' : '1rem',
+            alignItems: 'center'
+          }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </Container>
   );
 };
 

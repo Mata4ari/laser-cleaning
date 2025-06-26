@@ -20,12 +20,16 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import LocalPhoneIcon from "@mui/icons-material/LocalPhone";
 import InstagramIcon from "@mui/icons-material/Instagram";
+import TelegramIcon from "@mui/icons-material/Telegram";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 const socialLinks = [
   { icon: <InstagramIcon />, url: "https://instagram.com" },
+  { icon: <TelegramIcon />, url: "https://t.me/your_telegram" }
 ];
 
 const phoneNumber = "+375 (00) 000-00-00";
+const address = "г. Минск, ул. Примерная, 123";
 
 const Header: React.FC = () => {
   const theme = useTheme();
@@ -53,12 +57,31 @@ const Header: React.FC = () => {
               borderColor: theme.palette.primary.main,
               color: theme.palette.primary.main,
               '&:hover': {
-                backgroundColor: '#f0f4f8', // Светлый фон при наведении
+                backgroundColor: '#f0f4f8',
                 borderColor: theme.palette.primary.dark,
               }
             }}
           >
             {phoneNumber}
+          </Button>
+        </ListItem>
+        <ListItem sx={{ justifyContent: "center", mt: 2 }}>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<LocationOnIcon />}
+            href="https://yandex.ru/maps/"
+            target="_blank"
+            sx={{
+              borderColor: theme.palette.primary.main,
+              color: theme.palette.primary.main,
+              '&:hover': {
+                backgroundColor: '#f0f4f8',
+                borderColor: theme.palette.primary.dark,
+              }
+            }}
+          >
+            {address}
           </Button>
         </ListItem>
         <ListItem sx={{ justifyContent: "center", mt: 2 }}>
@@ -132,6 +155,23 @@ const Header: React.FC = () => {
                 </>
               ) : (
                 <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Button
+                    variant="text"
+                    color="inherit"
+                    startIcon={<LocationOnIcon />}
+                    href="https://yandex.ru/maps/"
+                    target="_blank"
+                    sx={{
+                      mr: 1,
+                      color: theme.palette.primary.contrastText,
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      }
+                    }}
+                  >
+                    {address}
+                  </Button>
+
                   <Stack direction="row" spacing={1} sx={{ mx: 2 }}>
                     {socialLinks.map((social, index) => (
                       <IconButton

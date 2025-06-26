@@ -5,12 +5,13 @@ import { HttpExceptionFilter } from './filters/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
+  
   app.useGlobalFilters(new HttpExceptionFilter());
   app.enableCors({
     origin: true,
     credentials: true,
   });
   
-  await app.listen(process.env.PORT || 5050);
+  await app.listen(5050);
 }
 bootstrap();

@@ -1,18 +1,7 @@
 // hooks/useAuth.ts
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-
-interface AdminCredentials {
-  email: string;
-  phone: string;
-  password: string;
-}
-
-const ADMIN_CREDENTIALS: AdminCredentials = {
-  email: 'admin@example.com',
-  phone: '+79991234567',
-  password: 'StrongAdminPassword123!'
-};
+import axios from 'axios';
 
 export default function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -21,46 +10,54 @@ export default function useAuth() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Проверка токена при загрузке
   useEffect(() => {
-    const authStatus = localStorage.getItem('adminAuthenticated') === 'true';
-    setIsAuthenticated(authStatus);
+    const token = localStorage.getItem('token');
+    
+    if (token) {
+      
+      const isJWT = token.split('.').length === 3;
+      setIsAuthenticated(isJWT);
+    }
+    
     setIsLoading(false);
   }, []);
 
-  const login = useCallback(async (email: string, phone: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      if (email !== ADMIN_CREDENTIALS.email) {
-        throw new Error('Неверный email');
-      }
+      // Отправляем запрос к вашему NestJS бэкенду
+      const response = await axios.post<{ accessToken: string }>('http://localhost:5050/auth/login', {
+        email,
+        password
+      });
 
-      if (phone !== ADMIN_CREDENTIALS.phone) {
-        throw new Error('Неверный номер телефона');
-      }
-
-      if (password !== ADMIN_CREDENTIALS.password) {
-        throw new Error('Неверный пароль');
-      }
-
-      localStorage.setItem('adminAuthenticated', 'true');
+      // Сохраняем токен из ответа
+      localStorage.setItem('token', response.data.accessToken);
       setIsAuthenticated(true);
       
+      // Перенаправляем пользователя
       const from = location.state?.from?.pathname || '/admin';
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message);
+      setError(err.response?.data?.message || 'Ошибка входа');
+      localStorage.removeItem('token');
       throw err;
     } finally {
       setIsLoading(false);
     }
   }, [navigate, location.state]);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('adminAuthenticated');
-    setIsAuthenticated(false);
-    navigate('/admin');
+  const logout = useCallback(async () => {
+    try {
+      await axios.post('http://localhost:5050/auth/logout');
+    } finally {
+      localStorage.removeItem('token');
+      setIsAuthenticated(false);
+      navigate('/admin', { replace: true });
+    }
   }, [navigate]);
 
   return {

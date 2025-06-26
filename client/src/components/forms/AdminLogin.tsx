@@ -23,7 +23,6 @@ import {
 import {
   Lock as LockIcon,
   Email as EmailIcon,
-  Phone as PhoneIcon,
   Visibility,
   VisibilityOff
 } from "@mui/icons-material";
@@ -33,7 +32,7 @@ const GradientCard = styled(Card)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius * 3,
   overflow: "hidden",
   boxShadow: `0 10px 40px -10px ${theme.palette.primary.main}30`,
-  transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+  transition: `all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)`,
   maxWidth: 500,
   margin: "0 auto",
   position: "relative",
@@ -67,7 +66,6 @@ const LoginButton = styled(Button)(({ theme }) => ({
 const AdminLogin: React.FC = () => {
   const theme = useTheme();
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading, error } = useAuth();
@@ -78,7 +76,7 @@ const AdminLogin: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, phone, password);
+      await login(email, password); // phone пустой
       navigate(location.state?.from || "/");
       setOpenSnackbar(true);
     } catch (err) {
@@ -92,9 +90,7 @@ const AdminLogin: React.FC = () => {
   };
 
   return (
-    <Box
-      sx={{ minHeight: "100vh", display: "flex", alignItems: "center", p: 2 }}
-    >
+    <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", p: 2 }}>
       <GradientCard>
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           <Box
@@ -162,24 +158,6 @@ const AdminLogin: React.FC = () => {
 
                 <TextField
                   fullWidth
-                  label="Номер телефона"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+79991234567"
-                  required
-                  variant="outlined"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PhoneIcon color="primary" />
-                      </InputAdornment>
-                    )
-                  }}
-                />
-
-                <TextField
-                  fullWidth
                   label="Пароль"
                   type={showPassword ? "text" : "password"}
                   value={password}
@@ -224,9 +202,7 @@ const AdminLogin: React.FC = () => {
                   backgroundImage: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`
                 }}
                 startIcon={
-                  isLoading ? (
-                    <CircularProgress size={20} color="inherit" />
-                  ) : null
+                  isLoading ? <CircularProgress size={20} color="inherit" /> : null
                 }
               >
                 {isLoading ? "Вход..." : "Войти"}

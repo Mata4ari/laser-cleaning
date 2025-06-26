@@ -1,5 +1,4 @@
-// client/src/services/portfolioService.ts
-const API_URL = '/api/portfolio';
+const API_URL = 'http://localhost:5050/api/portfolio';
 
 export interface PortfolioItem {
   id: number;
@@ -8,47 +7,56 @@ export interface PortfolioItem {
   imageUrl: string;
 }
 
+// Вспомогательная функция для получения заголовков с токеном
+const getAuthHeaders = (isFormData = false) => {
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+  
+  return headers;
+};
+
+const sendFormData = async (url: string, method: string, formData: FormData) => {
+  const response = await fetch(url, {
+    method,
+    headers: getAuthHeaders(true),
+    body: formData,
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to ${method} portfolio item`);
+  }
+  
+  return response.json();
+};
+
 export const getPortfolioItems = async (): Promise<PortfolioItem[]> => {
-  const response = await fetch(API_URL);
-  console.log("RESPONSE: ", response);
+  const response = await fetch(API_URL, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) {
     throw new Error('Failed to fetch portfolio items');
   }
-  console.log("RESPONSE: ", response.json());
   return response.json();
 };
 
-export const createPortfolioItem = async (item: Omit<PortfolioItem, 'id'>): Promise<PortfolioItem> => {
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(item),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to create portfolio item');
-  }
-  return response.json();
+export const createPortfolioItem = async (formData: FormData): Promise<PortfolioItem> => {
+  return sendFormData(API_URL, 'POST', formData);
 };
 
-export const updatePortfolioItem = async (id: number, item: Partial<PortfolioItem>): Promise<PortfolioItem> => {
-  const response = await fetch(`${API_URL}/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(item),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update portfolio item');
-  }
-  return response.json();
+export const updatePortfolioItem = async (id: number, formData: FormData): Promise<PortfolioItem> => {
+  return sendFormData(`${API_URL}/${id}`, 'PUT', formData);
 };
 
 export const deletePortfolioItem = async (id: number): Promise<void> => {
   const response = await fetch(`${API_URL}/${id}`, {
     method: 'DELETE',
+    headers: getAuthHeaders(),
   });
   if (!response.ok) {
     throw new Error('Failed to delete portfolio item');
