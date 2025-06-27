@@ -1,5 +1,5 @@
-import { Controller, Get, Res, Req } from '@nestjs/common';
-import { Response, Request } from 'express';
+import { Controller, Get, Res, Req ,Next} from '@nestjs/common';
+import { Response, Request , NextFunction} from 'express';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
@@ -10,12 +10,12 @@ export class AppController {
     this.serveIndex(res);
   }
 
-  @Get('/')
-  serveClient(@Req() req: Request, @Res() res: Response) {
+  @Get('*')
+  serveClient(@Req() req: Request, @Res() res: Response,@Next() next: NextFunction) {
     const requestedPath = req.path;
 
-    if (requestedPath.startsWith('/api')) {
-      return res.status(404).send('Not found');
+    if (requestedPath.startsWith('/api')||requestedPath.startsWith('/auth')||requestedPath.startsWith('/uploads')) {
+      return next();
     }
 
     const basePath = join(__dirname, '..', '..', 'client', 'build');
