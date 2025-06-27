@@ -9,7 +9,7 @@ export default function useAuth() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const BASE_URL = process.env.BASE_URL || 'http://localhost:5050';
+  const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:5050';
 
   // Проверка токена при загрузке
   useEffect(() => {
