@@ -126,6 +126,7 @@ const RequestForm: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:5050';
 
   const formik = useFormik({
   initialValues: {
@@ -153,7 +154,9 @@ const RequestForm: React.FC = () => {
       setOpenSnackbar(false);
       formik.setSubmitting(true);
       
-      await axios.post('http://localhost:5050/api/tg', formik.values);
+      
+
+      await axios.post(`${BASE_URL}/api/tg`, formik.values);
       
       setCompleted(true);
       setOpenSnackbar(true);

@@ -9,6 +9,7 @@ export default function useAuth() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:5050';
 
   // Проверка токена при загрузке
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function useAuth() {
 
     try {
       // Отправляем запрос к вашему NestJS бэкенду
-      const response = await axios.post<{ accessToken: string }>('http://localhost:5050/auth/login', {
+      const response = await axios.post<{ accessToken: string }>(`${BASE_URL}/auth/login`, {
         email,
         password
       });
@@ -52,7 +53,7 @@ export default function useAuth() {
 
   const logout = useCallback(async () => {
     try {
-      await axios.post('http://localhost:5050/auth/logout');
+      await axios.post(`${BASE_URL}/auth/logout`);
     } finally {
       localStorage.removeItem('token');
       setIsAuthenticated(false);
