@@ -36,11 +36,12 @@ import {
 } from "../../services/portfolioService";
 
 // Базовый URL для изображений
-const API_BASE_URL = process.env.REACT_APP_BASE_URL ||"http://localhost:5050";
+const API_BASE_URL = process.env.REACT_APP_BASE_URL || "http://localhost:5050";
 
 interface PortfolioSliderProps {
   onSlideChange?: (imageUrl: string) => void;
   isAdmin?: boolean;
+  isMobile?: boolean;
 }
 interface EditingItem extends PortfolioItem {
   imageFile?: File;
@@ -48,12 +49,12 @@ interface EditingItem extends PortfolioItem {
 
 const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
   onSlideChange,
-  isAdmin = false
+  isAdmin = false,
+  isMobile = false
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
-  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
 
   const swiperRef = useRef<SwiperType | null>(null);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
@@ -61,6 +62,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
+  const [swiperKey, setSwiperKey] = useState(0);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -69,13 +71,17 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
 
   // Функция для получения полного URL изображения
   const getFullImageUrl = (url: string) => {
-    if (!url) return '';
+    if (!url) return "";
     // Если URL уже абсолютный, возвращаем как есть
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
+    if (
+      url.startsWith("http://") ||
+      url.startsWith("https://") ||
+      url.startsWith("blob:")
+    ) {
       return url;
     }
     // Иначе добавляем базовый URL
-    return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
+    return `${API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`;
   };
 
   useEffect(() => {
@@ -95,17 +101,37 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
     loadItems();
   }, []);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0 && editingItem) {
-      const file = acceptedFiles[0];
-      const previewUrl = URL.createObjectURL(file);
-      setEditingItem({
-        ...editingItem,
-        imageUrl: previewUrl,
-        imageFile: file
-      });
-    }
-  }, [editingItem]);
+  function debounce(func: (...args: any[]) => void, wait: number) {
+    let timeout: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  }
+
+  useEffect(() => {
+    const handleResize = debounce(() => {
+      setSwiperKey((prev) => prev + 1);
+    }, 100);
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 0 && editingItem) {
+        const file = acceptedFiles[0];
+        const previewUrl = URL.createObjectURL(file);
+        setEditingItem({
+          ...editingItem,
+          imageUrl: previewUrl,
+          imageFile: file
+        });
+      }
+    },
+    [editingItem]
+  );
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
@@ -144,17 +170,20 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
       setIsUploading(true);
 
       const formData = new FormData();
-      formData.append('title', editingItem.title);
-      formData.append('description', editingItem.description);
+      formData.append("title", editingItem.title);
+      formData.append("description", editingItem.description);
 
       if (editingItem.imageFile) {
-        formData.append('image', editingItem.imageFile);
+        formData.append("image", editingItem.imageFile);
       }
 
       let updatedItems;
-      if (editingItem.id > 0 && portfolioItems.some(item => item.id === editingItem.id)) {
+      if (
+        editingItem.id > 0 &&
+        portfolioItems.some((item) => item.id === editingItem.id)
+      ) {
         const updatedItem = await updatePortfolioItem(editingItem.id, formData);
-        updatedItems = portfolioItems.map(item => 
+        updatedItems = portfolioItems.map((item) =>
           item.id === updatedItem.id ? updatedItem : item
         );
         showMessage("Работа обновлена", "success");
@@ -164,7 +193,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
         showMessage("Новая работа добавлена", "success");
       }
 
-      if (editingItem.imageUrl && editingItem.imageUrl.startsWith('blob:')) {
+      if (editingItem.imageUrl && editingItem.imageUrl.startsWith("blob:")) {
         URL.revokeObjectURL(editingItem.imageUrl);
       }
 
@@ -200,7 +229,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
   };
 
   const handleDialogClose = () => {
-    if (editingItem?.imageUrl && editingItem.imageUrl.startsWith('blob:')) {
+    if (editingItem?.imageUrl && editingItem.imageUrl.startsWith("blob:")) {
       URL.revokeObjectURL(editingItem.imageUrl);
     }
     setIsDialogOpen(false);
@@ -224,17 +253,19 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
 
   return (
     <Container maxWidth="xl" sx={{ py: 6 }}>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'flex-end', 
-        alignItems: 'center', 
-        mb: 6,
-        px: isMobile ? 2 : 0
-      }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          mb: 6,
+          px: isMobile ? 2 : 0
+        }}
+      >
         {isAdmin && (
-          <Button 
-            variant="contained" 
-            startIcon={<Add />} 
+          <Button
+            variant="contained"
+            startIcon={<Add />}
             onClick={() => {
               setEditingItem({
                 id: 0,
@@ -245,8 +276,8 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
               setIsDialogOpen(true);
             }}
             size="large"
-            sx={{ 
-              fontSize: isMobile ? '0.875rem' : '1rem',
+            sx={{
+              fontSize: isMobile ? "0.875rem" : "1rem",
               px: 3,
               py: 1.5
             }}
@@ -257,31 +288,40 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
       </Box>
 
       {portfolioItems.length > 0 ? (
-        <Box sx={{ 
-          position: 'relative',
-          px: isMobile ? 1 : 0
-        }}>
+        <Box
+          sx={{
+            position: "relative",
+            px: isMobile ? 1 : 0
+          }}
+        >
           <Swiper
             style={{
               width: "100%",
               height: "100%",
-              padding: "30px 0 60px"
+              padding: isMobile ? "10px 0 40px" : "30px 0 60px"
             }}
-            spaceBetween={isDesktop ? 60 : isTablet ? 40 : 30}
-            slidesPerView={1.2}
+            key={`swiper-${swiperKey}`}
+            spaceBetween={isDesktop ? 60 : isTablet ? 40 : 20}
+            slidesPerView={isMobile ? 1 : 1.2}
             centeredSlides={true}
-            pagination={{ 
-              clickable: true,
-              dynamicBullets: true 
-            }}
-            navigation={true}
-            loop={!isAdmin}
-            autoplay={!isAdmin ? { delay: 3500, disableOnInteraction: false } : false}
+            pagination={
+              isMobile
+                ? false
+                : {
+                    clickable: true,
+                    dynamicBullets: true
+                  }
+            }
+            navigation={!isMobile}
+            loop={true} // Всегда зацикливаем независимо от роли
+            autoplay={
+              !isAdmin ? { delay: 3500, disableOnInteraction: false } : false
+            }
             grabCursor={true}
             breakpoints={{
               320: {
-                slidesPerView: 1.1,
-                spaceBetween: 20
+                slidesPerView: 1,
+                spaceBetween: 10
               },
               600: {
                 slidesPerView: 1.3,
@@ -305,7 +345,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
               }
             }}
             modules={[Pagination, Navigation, EffectCreative]}
-            effect="creative"
+            effect={isMobile ? "slide" : "creative"}
             creativeEffect={{
               prev: {
                 shadow: true,
@@ -318,7 +358,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
                 rotate: [0, 0, 8]
               }
             }}
-            onSwiper={(swiper:SwiperType) => {
+            onSwiper={(swiper: SwiperType) => {
               swiperRef.current = swiper;
             }}
             onSlideChange={(swiper: SwiperType) => {
@@ -336,8 +376,8 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  padding: isMobile ? '0 5px' : '0 15px',
-                  cursor: 'pointer'
+                  padding: isMobile ? "0" : "0 15px",
+                  cursor: "pointer"
                 }}
                 onClick={() => handleCardClick(index)}
               >
@@ -346,15 +386,17 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
                     display: "flex",
                     flexDirection: "column",
                     transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                    borderRadius: "24px",
+                    borderRadius: isMobile ? "16px" : "24px",
                     boxShadow: "0 12px 36px rgba(0,0,0,0.15)",
                     "&:hover": {
-                      transform: "scale(1.03)",
-                      boxShadow: "0 18px 48px rgba(0,0,0,0.25)"
+                      transform: isMobile ? "none" : "scale(1.03)",
+                      boxShadow: isMobile
+                        ? "0 12px 36px rgba(0,0,0,0.15)"
+                        : "0 18px 48px rgba(0,0,0,0.25)"
                     },
                     height: "100%",
                     width: "100%",
-                    maxWidth: isDesktop ? 600 : 500,
+                    maxWidth: isMobile ? "100%" : isDesktop ? 600 : 500,
                     position: "relative",
                     overflow: "hidden"
                   }}
@@ -401,10 +443,16 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
 
                   <Box
                     sx={{
-                      height: isDesktop ? 380 : isTablet ? 340 : 300,
+                      height: isMobile
+                        ? 260
+                        : isDesktop
+                        ? 380
+                        : isTablet
+                        ? 340
+                        : 300,
                       overflow: "hidden",
-                      borderTopLeftRadius: "24px",
-                      borderTopRightRadius: "24px"
+                      borderTopLeftRadius: isMobile ? "16px" : "24px",
+                      borderTopRightRadius: isMobile ? "16px" : "24px"
                     }}
                   >
                     <CardMedia
@@ -417,7 +465,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
                         height: "100%",
                         transition: "transform 0.5s ease",
                         "&:hover": {
-                          transform: "scale(1.05)"
+                          transform: isMobile ? "none" : "scale(1.05)"
                         }
                       }}
                     />
@@ -425,14 +473,14 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
                   <CardContent
                     sx={{
                       flexGrow: 1,
-                      p: isDesktop ? 4 : 3,
-                      pb: isDesktop ? 4 : 3
+                      p: isMobile ? 2 : isDesktop ? 4 : 3,
+                      pb: isMobile ? 2 : isDesktop ? 4 : 3
                     }}
                   >
                     <Typography
-                      variant={isDesktop ? "h4" : "h5"}
+                      variant={isMobile ? "h6" : isDesktop ? "h4" : "h5"}
                       component="div"
-                      sx={{ 
+                      sx={{
                         fontWeight: 700,
                         mb: 2,
                         lineHeight: 1.2
@@ -441,10 +489,16 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
                       {item.title}
                     </Typography>
                     <Typography
-                      variant={isDesktop ? "body1" : "body2"}
+                      variant={
+                        isMobile ? "body2" : isDesktop ? "body1" : "body2"
+                      }
                       color="text.secondary"
                       sx={{
-                        fontSize: isDesktop ? '1.1rem' : '0.95rem',
+                        fontSize: isMobile
+                          ? "0.85rem"
+                          : isDesktop
+                          ? "1.1rem"
+                          : "0.95rem",
                         lineHeight: 1.6
                       }}
                     >
@@ -457,20 +511,22 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
           </Swiper>
         </Box>
       ) : (
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
-          py: 10,
-          textAlign: 'center',
-          px: 2
-        }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            py: 10,
+            textAlign: "center",
+            px: 2
+          }}
+        >
           <Typography variant={isMobile ? "h5" : "h4"} sx={{ mb: 3 }}>
             Нет работ для отображения
           </Typography>
           {isAdmin && (
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               startIcon={<Add />}
               size="large"
               onClick={() => {
@@ -483,7 +539,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
                 setIsDialogOpen(true);
               }}
               sx={{
-                fontSize: isMobile ? '0.875rem' : '1rem',
+                fontSize: isMobile ? "0.875rem" : "1rem",
                 px: 4,
                 py: 1.5
               }}
@@ -499,11 +555,14 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
         onClose={handleDialogClose}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
       >
-        <DialogTitle sx={{ 
-          fontSize: isMobile ? '1.25rem' : '1.5rem',
-          py: 2
-        }}>
+        <DialogTitle
+          sx={{
+            fontSize: isMobile ? "1.25rem" : "1.5rem",
+            py: 2
+          }}
+        >
           {editingItem?.id ? "Редактировать работу" : "Добавить работу"}
           <IconButton
             aria-label="close"
@@ -522,40 +581,44 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
           <Box sx={{ mb: 4 }} {...getRootProps()}>
             <input {...getInputProps()} />
             {editingItem?.imageUrl ? (
-              <Box sx={{
-                width: "100%",
-                height: isMobile ? 250 : 350,
-                mb: 3,
-                borderRadius: 2,
-                overflow: "hidden",
-                position: "relative"
-              }}>
+              <Box
+                sx={{
+                  width: "100%",
+                  height: isMobile ? 250 : 350,
+                  mb: 3,
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  position: "relative"
+                }}
+              >
                 <img
                   src={getFullImageUrl(editingItem.imageUrl)}
                   alt="Preview"
-                  style={{ 
-                    width: "100%", 
-                    height: "100%", 
-                    objectFit: "cover" 
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover"
                   }}
                 />
-                <Box sx={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: "rgba(0,0,0,0.5)",
-                  opacity: 0,
-                  transition: "opacity 0.3s",
-                  "&:hover": { opacity: 1 },
-                  cursor: "pointer"
-                }}>
-                  <Button 
-                    variant="contained" 
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0,0,0,0.5)",
+                    opacity: 0,
+                    transition: "opacity 0.3s",
+                    "&:hover": { opacity: 1 },
+                    cursor: "pointer"
+                  }}
+                >
+                  <Button
+                    variant="contained"
                     startIcon={<Add />}
                     size={isMobile ? "medium" : "large"}
                   >
@@ -564,23 +627,25 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
                 </Box>
               </Box>
             ) : (
-              <Box sx={{
-                width: "100%",
-                height: isMobile ? 200 : 300,
-                border: "2px dashed",
-                borderColor: "divider",
-                borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexDirection: "column",
-                cursor: "pointer",
-                transition: "border-color 0.3s",
-                "&:hover": {
-                  borderColor: "primary.main"
-                }
-              }}>
-                <Add fontSize="large" sx={{ fontSize: '3rem', mb: 2 }} />
+              <Box
+                sx={{
+                  width: "100%",
+                  height: isMobile ? 200 : 300,
+                  border: "2px dashed",
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "column",
+                  cursor: "pointer",
+                  transition: "border-color 0.3s",
+                  "&:hover": {
+                    borderColor: "primary.main"
+                  }
+                }}
+              >
+                <Add fontSize="large" sx={{ fontSize: "3rem", mb: 2 }} />
                 <Typography variant={isMobile ? "body1" : "h6"}>
                   Перетащите изображение или кликните для выбора
                 </Typography>
@@ -599,12 +664,12 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
             sx={{ mb: 3 }}
             InputProps={{
               style: {
-                fontSize: isMobile ? '0.95rem' : '1.1rem'
+                fontSize: isMobile ? "0.95rem" : "1.1rem"
               }
             }}
             InputLabelProps={{
               style: {
-                fontSize: isMobile ? '0.95rem' : '1.1rem'
+                fontSize: isMobile ? "0.95rem" : "1.1rem"
               }
             }}
           />
@@ -618,18 +683,18 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
             rows={isMobile ? 5 : 7}
             InputProps={{
               style: {
-                fontSize: isMobile ? '0.95rem' : '1.1rem'
+                fontSize: isMobile ? "0.95rem" : "1.1rem"
               }
             }}
             InputLabelProps={{
               style: {
-                fontSize: isMobile ? '0.95rem' : '1.1rem'
+                fontSize: isMobile ? "0.95rem" : "1.1rem"
               }
             }}
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button 
+          <Button
             onClick={handleDialogClose}
             size={isMobile ? "medium" : "large"}
             sx={{ px: 3 }}
@@ -648,7 +713,9 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
                 <CircularProgress size={24} sx={{ mr: 1 }} />
                 Сохранение...
               </>
-            ) : "Сохранить"}
+            ) : (
+              "Сохранить"
+            )}
           </Button>
         </DialogActions>
       </Dialog>
@@ -659,12 +726,12 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert 
-          onClose={handleCloseSnackbar} 
+        <Alert
+          onClose={handleCloseSnackbar}
           severity={snackbar.severity}
           sx={{
-            fontSize: isMobile ? '0.875rem' : '1rem',
-            alignItems: 'center'
+            fontSize: isMobile ? "0.875rem" : "1rem",
+            alignItems: "center"
           }}
         >
           {snackbar.message}

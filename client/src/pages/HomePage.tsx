@@ -53,8 +53,8 @@ import {
 import { motion } from "framer-motion";
 import PortfolioSlider from "../components/portfolio/PortfolioSlider";
 import RequestForm from "../components/forms/RequestForm";
-import auth from "../hooks/useAuth"
-import { useRef } from 'react';
+import auth from "../hooks/useAuth";
+import { useRef } from "react";
 
 const FullWidthSection = styled(Box)({
   width: "100%",
@@ -158,10 +158,7 @@ const features = [
     description:
       "Возможность очистки сложных рельефных поверхностей без повреждений.",
     icon: <CleaningServices fontSize="large" />,
-    details: [
-      "Очистка труднодоступных мест",
-      "Сохранение геометрии детали"
-    ]
+    details: ["Очистка труднодоступных мест", "Сохранение геометрии детали"]
   },
   {
     title: "Премиум-качество",
@@ -227,8 +224,7 @@ const applications = [
     title: "Исторические артефакты",
     description: "Бережная реставрация металлических предметов",
     icon: <SafetyCheck />
-  },
-  
+  }
 ];
 
 const faqs = [
@@ -313,11 +309,9 @@ const HomePage: React.FC = () => {
   const [expanded, setExpanded] = useState<string | false>(false);
   const formRef = useRef<HTMLDivElement>(null);
 
-  const handleSlideChange = (imageUrl: string) => {
-    
-  };
+  const handleSlideChange = (imageUrl: string) => {};
 
-   const scrollToForm = () => {
+  const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -438,238 +432,252 @@ const HomePage: React.FC = () => {
       </HeroSection>
 
       {/* Преимущества */}
-<Container maxWidth="xl" sx={{ py: 10, width: "100%" }}>
-  <Box textAlign="center" mb={8}>
-    <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }} gutterBottom>
-      Преимущества технологии
-    </Typography>
-    <Typography
-      variant="subtitle1"
-      color="text.secondary"
-      maxWidth="md"
-      mx="auto"
-    >
-      Гарантия качества и безопасности. Лазерная очистка - это современная
-      альтернатива пескоструйной обработке.
-    </Typography>
-  </Box>
-  <Box
-    sx={{
-      display: "flex",
-      flexWrap: "wrap",
-      justifyContent: "center",
-      gap: 4,
-      alignItems: "stretch" // Добавлено для выравнивания высоты
-    }}
-  >
-    {features.map((feature, index) => (
-      <Box
-        key={index}
-        sx={{
-          width: { xs: "100%", sm: "45%", md: "22%" },
-          minWidth: { xs: "100%", sm: "45%", md: "22%" },
-          display: "flex" // Добавлено для растягивания карточки
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: index * 0.1, duration: 0.5 }}
-          style={{ width: "100%", display: "flex" }} // motion.div тоже flex
-        >
-          <FeatureCard elevation={4} sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <CardContent sx={{ 
-              textAlign: "center", 
-              px: 3, 
-              py: 4,
-              flexGrow: 1, // Растягиваем контент на всю высоту
-              display: "flex",
-              flexDirection: "column"
-            }}>
-              <StyledAvatar>{feature.icon}</StyledAvatar>
-              <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
-                {feature.title}
-              </Typography>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{ mb: 2, flexGrow: 1 }} // Текст растягивается
-              >
-                {feature.description}
-              </Typography>
-              <List dense sx={{ width: "100%" }}>
-                {feature.details.map((detail, i) => (
-                  <ListItem key={i} sx={{ py: 0 }}>
-                    <ListItemIcon sx={{ minWidth: 32 }}>
-                      <CheckCircle color="primary" fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText primary={detail} />
-                  </ListItem>
-                ))}
-              </List>
-            </CardContent>
-          </FeatureCard>
-        </motion.div>
-      </Box>
-    ))}
-  </Box>
-</Container>
-
-      <Box py={10} sx={{ bgcolor: "background.paper", width: "100%" }}>
-  <Container maxWidth="xl">
-    <Box textAlign="center" mb={8}>
-      <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }}>
-        Как это работает
-      </Typography>
-      <Typography
-        variant="subtitle1"
-        color="text.secondary"
-        maxWidth="md"
-        mx="auto"
-      >
-        Процесс лазерной очистки состоит из трех основных этапов
-      </Typography>
-    </Box>
-    <Box
-      sx={{
-        display: "flex",
-        flexWrap: "wrap",
-        justifyContent: "center",
-        gap: 4,
-        alignItems: "stretch", // Добавлено для выравнивания высоты
-      }}
-    >
-      {howItWorks.map((step, index) => (
+      <Container maxWidth="xl" sx={{ py: 10, width: "100%" }}>
+        <Box textAlign="center" mb={8}>
+          <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }} gutterBottom>
+            Преимущества технологии
+          </Typography>
+          <Typography
+            variant="subtitle1"
+            color="text.secondary"
+            maxWidth="md"
+            mx="auto"
+          >
+            Гарантия качества и безопасности. Лазерная очистка - это современная
+            альтернатива пескоструйной обработке.
+          </Typography>
+        </Box>
         <Box
-          key={index}
           sx={{
-            width: { xs: "100%", sm: "45%", md: "30%" },
-            minWidth: { xs: "100%", sm: "45%", md: "30%" },
-            display: "flex", // Добавлено для растягивания карточки
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: 4,
+            alignItems: "stretch" // Добавлено для выравнивания высоты
           }}
         >
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.2, duration: 0.5 }}
-            style={{ width: "100%", display: "flex" }} // motion.div тоже flex
-          >
-            <FeatureCard elevation={4} sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-              <CardContent sx={{ 
-                textAlign: "center", 
-                px: 3, 
-                py: 4,
-                flexGrow: 1, // Растягиваем контент на всю высоту
-                display: "flex",
-                flexDirection: "column",
-              }}>
-                <StyledAvatar>{step.icon}</StyledAvatar>
-                <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
-                  {step.title}
-                </Typography>
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  sx={{ mb: 2, flexGrow: 1 }} // Текст тоже растягивается
-                >
-                  {step.description}
-                </Typography>
-                <List dense sx={{ width: "100%" }}>
-                  {step.steps.map((item, i) => (
-                    <ListItem key={i} sx={{ py: 0 }}>
-                      <ListItemIcon sx={{ minWidth: 32 }}>
-                        <CheckCircle color="primary" fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary={item} />
-                    </ListItem>
-                  ))}
-                </List>
-              </CardContent>
-            </FeatureCard>
-          </motion.div>
-        </Box>
-      ))}
-    </Box>
-  </Container>
-</Box>
-
-      {/* Области применения */}
-<Container maxWidth="xl" sx={{ py: 10 }}>
-  <Box textAlign="center" mb={8}>
-    <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }}>
-      Области применения
-    </Typography>
-    <Typography
-      variant="subtitle1"
-      color="text.secondary"
-      maxWidth="md"
-      mx="auto"
-    >
-      Наши услуги востребованы в различных отраслях промышленности
-    </Typography>
-  </Box>
-  <Box
-    sx={{
-      display: "flex",
-      flexWrap: "wrap",
-      justifyContent: "center",
-      gap: 4,
-      alignItems: "stretch", // Добавлено, чтобы карточки растягивались по высоте
-    }}
-  >
-    {applications.map((app, index) => (
-      <Box
-        key={index}
-        sx={{
-          width: { xs: "100%", sm: "45%", md: "22%" },
-          minWidth: { xs: "100%", sm: "45%", md: "22%" },
-          display: "flex", // Добавлено, чтобы карточка внутри растягивалась
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: index * 0.1, duration: 0.5 }}
-          style={{ width: "100%", display: "flex" }} // motion.div тоже должен быть flex
-        >
-          <Card sx={{ flex: 1, display: "flex", flexDirection: "column" }}> {/* flex: 1 + column */}
-            <CardContent
+          {features.map((feature, index) => (
+            <Box
+              key={index}
               sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                textAlign: "center",
-                p: 3,
-                flexGrow: 1, // Растягивает контент на всю высоту
+                width: { xs: "100%", sm: "45%", md: "22%" },
+                minWidth: { xs: "100%", sm: "45%", md: "22%" },
+                display: "flex" // Добавлено для растягивания карточки
               }}
             >
-              <Avatar
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                style={{ width: "100%", display: "flex" }} // motion.div тоже flex
+              >
+                <FeatureCard
+                  elevation={4}
+                  sx={{ flex: 1, display: "flex", flexDirection: "column" }}
+                >
+                  <CardContent
+                    sx={{
+                      textAlign: "center",
+                      px: 3,
+                      py: 4,
+                      flexGrow: 1, // Растягиваем контент на всю высоту
+                      display: "flex",
+                      flexDirection: "column"
+                    }}
+                  >
+                    <StyledAvatar>{feature.icon}</StyledAvatar>
+                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
+                      {feature.title}
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      color="text.secondary"
+                      sx={{ mb: 2, flexGrow: 1 }} // Текст растягивается
+                    >
+                      {feature.description}
+                    </Typography>
+                    <List dense sx={{ width: "100%" }}>
+                      {feature.details.map((detail, i) => (
+                        <ListItem key={i} sx={{ py: 0 }}>
+                          <ListItemIcon sx={{ minWidth: 32 }}>
+                            <CheckCircle color="primary" fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText primary={detail} />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </CardContent>
+                </FeatureCard>
+              </motion.div>
+            </Box>
+          ))}
+        </Box>
+      </Container>
+
+      <Box py={10} sx={{ bgcolor: "background.paper", width: "100%" }}>
+        <Container maxWidth="xl">
+          <Box textAlign="center" mb={8}>
+            <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }}>
+              Как это работает
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              color="text.secondary"
+              maxWidth="md"
+              mx="auto"
+            >
+              Процесс лазерной очистки состоит из трех основных этапов
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: 4,
+              alignItems: "stretch" // Добавлено для выравнивания высоты
+            }}
+          >
+            {howItWorks.map((step, index) => (
+              <Box
+                key={index}
                 sx={{
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  color: "primary.main",
-                  width: 56,
-                  height: 56,
-                  mb: 2,
+                  width: { xs: "100%", sm: "45%", md: "30%" },
+                  minWidth: { xs: "100%", sm: "45%", md: "30%" },
+                  display: "flex" // Добавлено для растягивания карточки
                 }}
               >
-                {app.icon}
-              </Avatar>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                {app.title}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {app.description}
-              </Typography>
-            </CardContent>
-          </Card>
-        </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.2, duration: 0.5 }}
+                  style={{ width: "100%", display: "flex" }} // motion.div тоже flex
+                >
+                  <FeatureCard
+                    elevation={4}
+                    sx={{ flex: 1, display: "flex", flexDirection: "column" }}
+                  >
+                    <CardContent
+                      sx={{
+                        textAlign: "center",
+                        px: 3,
+                        py: 4,
+                        flexGrow: 1, // Растягиваем контент на всю высоту
+                        display: "flex",
+                        flexDirection: "column"
+                      }}
+                    >
+                      <StyledAvatar>{step.icon}</StyledAvatar>
+                      <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
+                        {step.title}
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        color="text.secondary"
+                        sx={{ mb: 2, flexGrow: 1 }} // Текст тоже растягивается
+                      >
+                        {step.description}
+                      </Typography>
+                      <List dense sx={{ width: "100%" }}>
+                        {step.steps.map((item, i) => (
+                          <ListItem key={i} sx={{ py: 0 }}>
+                            <ListItemIcon sx={{ minWidth: 32 }}>
+                              <CheckCircle color="primary" fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText primary={item} />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </CardContent>
+                  </FeatureCard>
+                </motion.div>
+              </Box>
+            ))}
+          </Box>
+        </Container>
       </Box>
-    ))}
-  </Box>
-</Container>
+
+      {/* Области применения */}
+      <Container maxWidth="xl" sx={{ py: 10 }}>
+        <Box textAlign="center" mb={8}>
+          <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }}>
+            Области применения
+          </Typography>
+          <Typography
+            variant="subtitle1"
+            color="text.secondary"
+            maxWidth="md"
+            mx="auto"
+          >
+            Наши услуги востребованы в различных отраслях промышленности
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: 4,
+            alignItems: "stretch" // Добавлено, чтобы карточки растягивались по высоте
+          }}
+        >
+          {applications.map((app, index) => (
+            <Box
+              key={index}
+              sx={{
+                width: { xs: "100%", sm: "45%", md: "22%" },
+                minWidth: { xs: "100%", sm: "45%", md: "22%" },
+                display: "flex" // Добавлено, чтобы карточка внутри растягивалась
+              }}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                style={{ width: "100%", display: "flex" }} // motion.div тоже должен быть flex
+              >
+                <Card
+                  sx={{ flex: 1, display: "flex", flexDirection: "column" }}
+                >
+                  {" "}
+                  {/* flex: 1 + column */}
+                  <CardContent
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      textAlign: "center",
+                      p: 3,
+                      flexGrow: 1 // Растягивает контент на всю высоту
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        bgcolor: alpha(theme.palette.primary.main, 0.1),
+                        color: "primary.main",
+                        width: 56,
+                        height: 56,
+                        mb: 2
+                      }}
+                    >
+                      {app.icon}
+                    </Avatar>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                      {app.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {app.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Box>
+          ))}
+        </Box>
+      </Container>
 
       {/* Наши преимущества */}
       <Box py={10} sx={{ bgcolor: "background.paper", width: "100%" }}>
@@ -747,7 +755,6 @@ const HomePage: React.FC = () => {
         </Container>
       </Box>
 
-
       {/* Примеры работ */}
       <Box
         py={20}
@@ -785,7 +792,8 @@ const HomePage: React.FC = () => {
               sx={{
                 fontSize: { xs: "1.25rem", md: "1.75rem" },
                 lineHeight: 1.6,
-                fontWeight: 400
+                fontWeight: 400,
+                mb: -20
               }}
             >
               Реальные примеры очистки поверхностей от коррозии и загрязнений.
@@ -803,7 +811,11 @@ const HomePage: React.FC = () => {
               position: "relative"
             }}
           >
-            <PortfolioSlider onSlideChange={handleSlideChange} isAdmin={auth().isAuthenticated}/>
+            <PortfolioSlider
+              onSlideChange={handleSlideChange}
+              isAdmin={auth().isAuthenticated}
+              isMobile={isMobile ? true : false}
+            />
           </Box>
         </Container>
       </Box>
@@ -836,7 +848,7 @@ const HomePage: React.FC = () => {
                 <Box
                   sx={{
                     width: { xs: "100%", md: "50%" },
-                    backgroundImage: 'url(/images/form.png)',
+                    backgroundImage: "url(/images/form.png)",
                     color: "common.white",
                     p: 6,
                     display: "flex",
@@ -848,29 +860,33 @@ const HomePage: React.FC = () => {
                     Готовы начать?
                   </Typography>
                   <Typography variant="body1" paragraph sx={{ opacity: 0.9 }}>
-                    Оставьте заявку, и мы свяжемся с вами для
-                    консультации. Предоставим расчет стоимости и сроков
-                    выполнения.
+                    Оставьте заявку, и мы свяжемся с вами для консультации.
+                    Предоставим расчет стоимости и сроков выполнения.
                   </Typography>
                   <Stack
                     direction="row"
                     spacing={2}
-                    sx={{ mt: 3 }}
+                    sx={{ mt: 3, justifyContent: "center" }}
                     flexWrap="wrap"
                   >
-                    <Chip
-                      label="Бесплатная консультация"
-                      color="primary"
-                      sx={{ fontWeight: 600, mb: 1 }}
-                    />
-                    <Chip
-                      label="Ответ в течение 2 суток"
-                      color="primary"
-                      sx={{ fontWeight: 600, mb: 1 }}
-                    />
+                    <Box>
+                      <Chip
+                        label="Бесплатная консультация"
+                        color="primary"
+                        sx={{ fontWeight: 600, mb: 1 }}
+                      />
+                    </Box>
+                    <Box>
+                      <Chip
+                        label="Ответ в течение 2 суток"
+                        color="primary"
+                        sx={{ fontWeight: 600, mt: 0.5 }}
+                      />
+                    </Box>
                   </Stack>
                 </Box>
-                <Box ref={formRef}
+                <Box
+                  ref={formRef}
                   sx={{
                     width: { xs: "100%", md: "50%" },
                     p: 6
@@ -937,7 +953,6 @@ const HomePage: React.FC = () => {
           <KeyboardArrowUp />
         </Fab>
       </ScrollTop>
-
     </Box>
   );
 };
