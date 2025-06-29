@@ -880,7 +880,7 @@ const HomePage: React.FC = () => {
                       <Chip
                         label="Ответ в течение 2 суток"
                         color="primary"
-                        sx={{ fontWeight: 600, mt: 0.5 }}
+                        sx={{ fontWeight: 600, mt: isMobile ? 0.5 : 0 }}
                       />
                     </Box>
                   </Stack>
