@@ -252,12 +252,13 @@ const RequestForm: React.FC = () => {
       case 0:
         return (
           <Stack
+            key="step-0"
             sx={{ mr: isSmallScreen ? -5 : 0, ml: isSmallScreen ? -5 : 0 }}
             spacing={isSmallScreen ? 2 : 2}
           >
             <TextField
               fullWidth
-              id="name"
+              id="step0-name"
               name="name"
               label="Ваше имя*"
               value={formik.values.name}
@@ -286,7 +287,7 @@ const RequestForm: React.FC = () => {
             />
             <TextField
               fullWidth
-              id="email"
+              id="step0-email"
               name="email"
               label="Email"
               type="email"
@@ -316,7 +317,7 @@ const RequestForm: React.FC = () => {
             />
             <TextField
               fullWidth
-              id="phone"
+              id="step0-phone"
               name="phone"
               label="Телефон*"
               placeholder="+375 (__) ___-__-__"
@@ -349,12 +350,13 @@ const RequestForm: React.FC = () => {
       case 1:
         return (
           <Stack
+            key="step-1"
             sx={{ mr: isSmallScreen ? -5 : 0, ml: isSmallScreen ? -5 : 0 }}
             spacing={isSmallScreen ? 3 : 2}
           >
             <TextField
               fullWidth
-              id="serviceType"
+              id="step1-serviceType"
               name="serviceType"
               select
               label="Тип услуги*"
@@ -408,7 +410,7 @@ const RequestForm: React.FC = () => {
             </TextField>
             <TextField
               fullWidth
-              id="materialType"
+              id="step1-materialType"
               name="materialType"
               select
               label="Тип материала*"
@@ -465,12 +467,13 @@ const RequestForm: React.FC = () => {
       case 2:
         return (
           <Stack
+            key="step-2"
             sx={{ mr: isSmallScreen ? -5 : 0, ml: isSmallScreen ? -5 : 0 }}
             spacing={isSmallScreen ? 3 : 2}
           >
             <TextField
               fullWidth
-              id="message"
+              id="step2-message"
               name="message"
               label="Описание"
               multiline
