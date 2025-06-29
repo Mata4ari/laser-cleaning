@@ -11,15 +11,20 @@ export default function useAuth() {
   const location = useLocation();
   const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:5050';
 
-  // Проверка токена при загрузке
   useEffect(() => {
     const token = localStorage.getItem('token');
+    let payload;
+    if(token){
+      payload = JSON.parse(atob(token.split('.')[1])); 
     
-    if (token) {
-      
-      const isJWT = token.split('.').length === 3;
-      setIsAuthenticated(isJWT);
+      const now = Math.floor(Date.now() / 1000); 
+        
+      const isTokenRecent = now  <= payload.exp;
+        
+      setIsAuthenticated(isTokenRecent);
     }
+    else
+      setIsAuthenticated(false);
     
     setIsLoading(false);
   }, []);

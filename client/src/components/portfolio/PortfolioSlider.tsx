@@ -313,7 +313,7 @@ const PortfolioSlider: React.FC<PortfolioSliderProps> = ({
                   }
             }
             navigation={!isMobile}
-            loop={true} // Всегда зацикливаем независимо от роли
+            loop={false} // Всегда зацикливаем независимо от роли
             autoplay={
               !isAdmin ? { delay: 3500, disableOnInteraction: false } : false
             }
